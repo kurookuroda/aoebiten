@@ -47,7 +47,7 @@ func (sm *SoundManager) playTone(freq float64, durationSec float64) {
 	osc.Get("frequency").Set("value", freq)
 
 	now := ctx.Get("currentTime").Float()
-	gain.Get("gain").Call("setValueAtTime", 0.3, now)
+	gain.Get("gain").Call("setValueAtTime", 0.1, now)
 	gain.Get("gain").Call("exponentialRampToValueAtTime", 0.01, now+durationSec)
 
 	osc.Call("connect", gain)
