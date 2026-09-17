@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aozora Reader (Ebiten WASM)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        #game-container {
+            position: relative;
+            border: 2px solid #555;
+            image-rendering: pixelated;
+        }
+        canvas {
+            display: block;
+            width: 512px;
+            height: 512px;
+            image-rendering: pixelated;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .controls {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            max-width: 512px;
+        }
+        .controls h2 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+        .controls table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .controls th, .controls td {
+            border: 1px solid #444;
+            padding: 4px 8px;
+            text-align: left;
+        }
+        .controls th {
+            background: #222;
+        }
+    </style>
+</head>
+<body>
+    <h1>Aozora Reader (Ebiten WASM)</h1>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="loading">Now Loading...</div>
+    </div>
+
+    <div class="controls">
+        <h2>操作方法</h2>
+        <table>
+            <tr><th>機能</th><th>キーボード</th><th>ゲームパッド</th></tr>
+            <tr><td>進む / 決定</td><td>Enter / 左クリック / ↓</td><td>A / START</td></tr>
+            <tr><td>スキップ</td><td>Enter / 左クリック / ↓</td><td>A</td></tr>
+            <tr><td>高速送り</td><td>↓ + Z</td><td>↓ + A</td></tr>
+            <tr><td>超高速送り</td><td>↓ + X</td><td>↓ + B</td></tr>
+            <tr><td>スペース高速</td><td>スペース長押し</td><td>-</td></tr>
+            <tr><td>前のページ</td><td>↑</td><td>↑</td></tr>
+            <tr><td>フォント切替</td><td>F</td><td>X</td></tr>
+            <tr><td>リセット</td><td>R / SELECT / START</td><td>SELECT / START</td></tr>
+        </table>
+        <p>※ ゲームパッドは接続後、ボタンを押すと認識されます。</p>
+    </div>
+
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("aozora-reader.wasm"), go.importObject)
+            .then((result) => {
+                document.getElementById("loading").style.display = "none";
+                go.run(result.instance);
+            })
+            .catch((err) => {
+                document.getElementById("loading").textContent = "Error: " + err;
+                console.error(err);
+            });
+    </script>
+</body>
+</html>
