@@ -294,10 +294,14 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{0, 0, 0, 255})
+	// Pyxel cls(0) - 黒背景
+	screen.Fill(PyxelBlack)
 
-	vector.DrawFilledRect(screen, float32(BoxX+1), float32(BoxY+1), float32(BoxW-2), float32(BoxH-2), color.RGBA{0, 0, 170, 255}, false)
-	vector.StrokeRect(screen, float32(BoxX), float32(BoxY), float32(BoxW), float32(BoxH), 1, color.RGBA{192, 192, 192, 255}, false)
+	// Pyxel rect(BOX_X+1, BOX_Y+1, BOX_W-2, BOX_H-2, 1) - 内側暗青
+	vector.DrawFilledRect(screen, float32(BoxX+1), float32(BoxY+1), float32(BoxW-2), float32(BoxH-2), PyxelDarkBlue, false)
+
+	// Pyxel rectb(BOX_X, BOX_Y, BOX_W, BOX_H, 7) - 枠線白
+	vector.StrokeRect(screen, float32(BoxX), float32(BoxY), float32(BoxW), float32(BoxH), 1, PyxelWhite, false)
 
 	if g.pageIndex >= len(g.pages) {
 		y := BoxY + Padding
@@ -305,7 +309,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			m := g.face.Metrics()
 			y += m.Ascent.Ceil()
 		}
-		text.Draw(screen, "-- 読 --", g.face, BoxX+Padding, y, color.White)
+		text.Draw(screen, "-- 読了 --", g.face, BoxX+Padding, y, PyxelWhite)
 		g.drawUI(screen)
 		return
 	}
@@ -325,16 +329,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for i, line := range lines {
 		y := baseY + i*g.lineHeight
-		text.Draw(screen, line, g.face, BoxX+Padding, y, color.White)
+		text.Draw(screen, line, g.face, BoxX+Padding, y, PyxelWhite)
 	}
 
-	if g.pageDone && (g.frameCount/30)%2 == 0 {
+	// Pyxel ▼ 点滅 (frame_count % 30 < 15)
+	if g.pageDone && (g.frameCount%30) < 15 {
 		y := BoxY + BoxH - 12
 		if g.face != nil {
 			m := g.face.Metrics()
 			y = BoxY + BoxH - Padding - g.currentSize + m.Ascent.Ceil()
 		}
-		text.Draw(screen, "▼", g.face, BoxX+BoxW-14, y, color.White)
+		text.Draw(screen, "▼", g.face, BoxX+BoxW-14, y, PyxelWhite)
 	}
 
 	g.drawUI(screen)
@@ -364,8 +369,10 @@ func (g *Game) drawUI(screen *ebiten.Image) {
 		labelW = font.MeasureString(g.face, pageLabel).Ceil()
 	}
 	x := BoxX + BoxW - Padding - labelW
-	text.Draw(screen, pageLabel, g.face, x, footerY, color.RGBA{128, 128, 128, 255})
-	text.Draw(screen, fontLabel, g.face, BoxX+Padding, footerY, color.RGBA{128, 128, 128, 255})
+
+	// Pyxel color 5 = dark_gray
+	text.Draw(screen, pageLabel, g.face, x, footerY, PyxelDarkGray)
+	text.Draw(screen, fontLabel, g.face, BoxX+Padding, footerY, PyxelDarkGray)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
