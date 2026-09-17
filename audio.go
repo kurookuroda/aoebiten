@@ -89,7 +89,7 @@ func generateSquareWaveWAV(freq, durationSec, duty float64) []byte {
 
 	byteData := make([]byte, len(data)*2)
 	for i, v := range data {
-		binary.LittleEndian.PutUint16(byteData[i*2:], uint16(int32(v)+32768))
+		binary.LittleEndian.PutUint16(byteData[i*2:], uint16(v))
 	}
 
 	return buildWAVHeader(byteData, 1, 16, audioSampleRate)
