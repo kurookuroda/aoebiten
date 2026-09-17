@@ -88,7 +88,7 @@ func (i *Input) downAlonePressed() bool {
 }
 
 func (i *Input) skipPressed() bool {
-	return inpututil.IsKeyJustPressed(ebiten.KeyReturn) ||
+	return inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
 		i.downAlonePressed()
 }
@@ -99,7 +99,7 @@ func (i *Input) backPressed() bool {
 
 func (i *Input) nextPressed() bool {
 	return i.downAlonePressed() ||
-		inpututil.IsKeyJustPressed(ebiten.KeyReturn) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 }
 
