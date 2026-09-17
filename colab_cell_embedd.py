@@ -1,17 +1,18 @@
-%%writefile /content/merge_wasm4.py
+%%writefile /content/merge_wasm8.py
 """
 
 cd aoebiten
 pwd
+go get github.com/hajimehoshi/ebiten/v2@latest
 # go mod init はすでに go.mod が存在するため不要。削除。
 go mod tidy
 #go build -tags embed -o aozora-reader
 #./aozora-reader
-GOOS=js GOARCH=wasm go build -tags embed -o aozora-reader.wasm
+GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -tags embed -o aozora-reader.wasm
 
-cp "/aoebiten/aozora-reader.wasm" /content/
-cp "/aoebiten/index.html" /content/
-python3 merge_wasm4.py wasm_exec.js aozora-reader.wasm
+cp "/content/aoebiten/aozora-reader.wasm" /content/
+cp "/content/aoebiten/index.html" /content/
+python3 merge_wasm8.py wasm_exec.js aozora-reader.wasm
 
 
 """
@@ -156,6 +157,77 @@ h2 {{
 </script>
 
 <script>
+// ===== 音声対応 =====
+window.__game_audio_context__ = null;
+
+function initAudioContext() {{
+    console.log("initAudioContext called");
+    if (!window.__game_audio_context__) {{
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {{
+            window.__game_audio_context__ = new AudioContextClass();
+            console.log("AudioContext created, state:", window.__game_audio_context__.state);
+        }} else {{
+            console.error("AudioContext not supported");
+        }}
+    }}
+    if (window.__game_audio_context__) {{
+        if (window.__game_audio_context__.state === "suspended") {{
+            window.__game_audio_context__.resume().then(() => {{
+                console.log("AudioContext resumed, state:", window.__game_audio_context__.state);
+            }}).catch(err => console.error("resume failed:", err));
+        }} else {{
+            console.log("AudioContext already state:", window.__game_audio_context__.state);
+        }}
+    }}
+}}
+
+// キャプチャフェーズで複数イベントを監視
+["click", "touchstart", "touchend", "keydown"].forEach(evt => {{
+    document.addEventListener(evt, initAudioContext, {{ capture: true }});
+}});
+
+// Goから呼び出される音声関数
+window.playBeep = function(freq, durationSec) {{
+    console.log("playBeep called:", freq, durationSec);
+    if (!window.__game_audio_context__) {{
+        console.log("playBeep: AudioContext not ready, trying to create...");
+        initAudioContext();
+        if (!window.__game_audio_context__) {{
+            console.error("playBeep: failed to create AudioContext");
+            return;
+        }}
+    }}
+
+    const ctx = window.__game_audio_context__;
+    console.log("playBeep: AudioContext state:", ctx.state);
+
+    // suspended なら resume を試みる
+    if (ctx.state === "suspended") {{
+        ctx.resume();
+        console.log("playBeep: called resume()");
+    }}
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = freq;
+
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + durationSec);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + durationSec);
+
+    console.log("playBeep: started oscillator at", freq, "Hz");
+}};
+// =====================
+
 const wasmBase64 = "{wasm_b64}";
 
 function base64ToUint8Array(base64) {{
@@ -193,27 +265,6 @@ const observer = new MutationObserver((mutations) => {{
     }}
 }});
 observer.observe(document.body, {{ childList: true, subtree: true }});
-
-// ===== 音声対応: AudioContext をユーザーインタラクション後に resume =====
-let audioResumed = false;
-function resumeAudioContext() {{
-    if (audioResumed) return;
-    if (typeof window !== 'undefined' && window.AudioContext) {{
-        const ctx = new AudioContext();
-        if (ctx.state === 'suspended') {{
-            ctx.resume().then(() => {{
-                console.log('AudioContext resumed');
-                audioResumed = true;
-            }}).catch(e => console.error('AudioContext resume failed:', e));
-        }} else {{
-            audioResumed = true;
-        }}
-    }}
-}}
-document.addEventListener('click', resumeAudioContext, {{ once: true }});
-document.addEventListener('touchstart', resumeAudioContext, {{ once: true }});
-document.addEventListener('keydown', resumeAudioContext, {{ once: true }});
-// ====================================================================
 
 WebAssembly.instantiateStreaming(fetch(url), go.importObject)
     .then((result) => {{
