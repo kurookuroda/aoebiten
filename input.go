@@ -9,6 +9,10 @@ type Input struct {
 	gamepadIDs []ebiten.GamepadID
 }
 
+func (i *Input) update() {
+	i.updateGamepadIDs()
+}
+
 func (i *Input) updateGamepadIDs() {
 	i.gamepadIDs = i.gamepadIDs[:0]
 	for _, id := range ebiten.GamepadIDs() {
@@ -38,6 +42,11 @@ func (i *Input) isKeyOrButtonJustPressed(key ebiten.Key, btn ebiten.StandardGame
 		}
 	}
 	return false
+}
+
+func (i *Input) justTouched() bool {
+	ids := inpututil.AppendJustPressedTouchIDs(nil)
+	return len(ids) > 0
 }
 
 func (i *Input) btnA() bool {
@@ -90,6 +99,7 @@ func (i *Input) downAlonePressed() bool {
 func (i *Input) skipPressed() bool {
 	return inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
+		i.justTouched() ||
 		i.downAlonePressed()
 }
 
@@ -100,7 +110,8 @@ func (i *Input) backPressed() bool {
 func (i *Input) nextPressed() bool {
 	return i.downAlonePressed() ||
 		inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
-		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
+		i.justTouched()
 }
 
 func (i *Input) superSpeedCombo() bool {

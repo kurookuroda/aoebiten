@@ -201,7 +201,7 @@ func (g *Game) getTypingSpeed() (interval, charsPerTick int) {
 
 func (g *Game) Update() error {
 	g.frameCount++
-	g.input.updateGamepadIDs()
+	g.input.update()
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyQ) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return ebiten.Termination
