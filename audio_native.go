@@ -1,3 +1,5 @@
+//go:build !js
+
 package main
 
 import (
@@ -25,7 +27,6 @@ func newSoundManager() (*SoundManager, error) {
 	sm := &SoundManager{context: ctx}
 
 	var err error
-	// 音の長さを十分に確保（WASMでは短すぎると再生されない）
 	sm.sndTalk, err = createSquareWavePlayer(ctx, 261.63, 0.12, 0.5) // C4
 	if err != nil {
 		return nil, fmt.Errorf("sndTalk: %w", err)
@@ -66,9 +67,9 @@ func generateSquareWaveWAV(freq, durationSec, duty float64) []byte {
 	}
 	data := make([]int16, numSamples)
 	period := sampleRate / freq
-	amp := int16(28000) // 最大振幅に近づける（32767がmax）
+	amp := int16(28000)
 
-	fadeStart := int(float64(numSamples) * 0.8) // 最後20%でフェードアウト
+	fadeStart := int(float64(numSamples) * 0.8)
 
 	for i := 0; i < numSamples; i++ {
 		phase := (float64(i) / period) - math.Floor(float64(i)/period)
@@ -79,7 +80,6 @@ func generateSquareWaveWAV(freq, durationSec, duty float64) []byte {
 			sample = -amp
 		}
 
-		// フェードアウトでクリックノイズ防止
 		if i >= fadeStart {
 			fadeRatio := float64(numSamples-i) / float64(numSamples-fadeStart)
 			sample = int16(float64(sample) * fadeRatio)
@@ -104,12 +104,12 @@ func buildWAVHeader(pcmData []byte, channels, bitsPerSample, sampleRate int) []b
 	header.WriteString("WAVE")
 
 	header.WriteString("fmt ")
-	binary.Write(header, binary.LittleEndian, uint32(16)) // Subchunk1Size
-	binary.Write(header, binary.LittleEndian, uint16(1))  // AudioFormat = PCM
+	binary.Write(header, binary.LittleEndian, uint32(16))
+	binary.Write(header, binary.LittleEndian, uint16(1))
 	binary.Write(header, binary.LittleEndian, uint16(channels))
 	binary.Write(header, binary.LittleEndian, uint32(sampleRate))
-	binary.Write(header, binary.LittleEndian, uint32(sampleRate*channels*bitsPerSample/8)) // ByteRate
-	binary.Write(header, binary.LittleEndian, uint16(channels*bitsPerSample/8))            // BlockAlign
+	binary.Write(header, binary.LittleEndian, uint32(sampleRate*channels*bitsPerSample/8))
+	binary.Write(header, binary.LittleEndian, uint16(channels*bitsPerSample/8))
 	binary.Write(header, binary.LittleEndian, uint16(bitsPerSample))
 
 	header.WriteString("data")
